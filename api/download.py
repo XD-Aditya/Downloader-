@@ -71,13 +71,17 @@ def download(url: str, request: Request):
                         "filesize": f.get("filesize")
                     }
 
-            # Thumbnail width/height (if available)
-            thumbnail_info = {
-                "url": entry.get("thumbnail")
-            }
-            # yt_dlp sometimes has "thumbnails" list with width/height
+            # Handle thumbnail short link
+            thumbnail_url = entry.get("thumbnail")
+            if thumbnail_url:
+                thumb_short = str(request.base_url) + f"d/{create_short_link(thumbnail_url)}"
+                thumbnail_info = {"url": thumb_short}
+            else:
+                thumbnail_info = {"url": None}
+
+            # Add optional width/height if available
             if entry.get("thumbnails"):
-                thumb = entry.get("thumbnails")[-1]  # highest quality thumbnail
+                thumb = entry.get("thumbnails")[-1]
                 thumbnail_info["width"] = thumb.get("width")
                 thumbnail_info["height"] = thumb.get("height")
 
