@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, Request, Query
 from fastapi.responses import RedirectResponse, JSONResponse
 import yt_dlp
 import string, random
@@ -41,9 +41,16 @@ def get_ydl_opts(cookies_file=None):
     return opts
 
 @app.get("/api/download")
-def download(url: str, request: Request, cookies_file: str = Query(default=None, description="Optional path to cookies.txt for authenticated downloads")):
+def download(
+    url: str, 
+    request: Request, 
+    cookies_file: str = Query(default=None, description="Optional path to cookies.txt for authenticated downloads")
+):
     if not url or not is_valid_url(url):
-        raise HTTPException(status_code=400, detail="Invalid URL")
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "Credit": "", "details": "Invalid URL"}
+        )
 
     try:
         ydl_opts = get_ydl_opts(cookies_file)
@@ -107,15 +114,48 @@ def download(url: str, request: Request, cookies_file: str = Query(default=None,
             "videos": videos
         })
 
+    except yt_dlp.utils.DownloadError as e:
+        # Specific known yt-dlp error (private or blocked content)
+        print(f"[yt-dlp ERROR] {e}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "Credit": "@xdshivay",
+                "details": "The video is not accessible. It might be private, removed, or require login."
+            }
+        )
     except Exception as e:
-        raise HTTPException(status_code=500,detail="Failed to fetch the video. The content may be private, unavailable, or blocked.")
-
+        # Generic fallback error
+        print(f"[ERROR] {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "Credit": "@xdshivay",
+                "details": "Something went wrong while processing your request."
+            }
+        )
 
 @app.get("/d/{short_id}")
 def redirect_link(short_id: str):
     url = short_db.get(short_id)
     if not url:
-        raise HTTPException(status_code=404, detail="Invalid link")
+        return JSONResponse(
+            status_code=404,
+            content={
+                "status": "error",
+                "Credit": "@xdshivay",
+                "details": "Invalid link"
+            }
+        )
     if not is_valid_url(url):
-        raise HTTPException(status_code=400, detail="Unsafe URL")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "Credit": "@xdshivay",
+                "details": "Unsafe URL"
+            }
+        )
     return RedirectResponse(url)
