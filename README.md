@@ -67,7 +67,7 @@ https://your-project.vercel.app/api/download?url=https://www.instagram.com/reel/
     "480p": "/d/QwE456"
   }
 }
-
+```
 **Installation (Local / VPS)**
 -Clone the repo:
 -git clone https://github.com/<your-username>/multi-platform-downloader.git
