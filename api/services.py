@@ -4,14 +4,12 @@ import yt_dlp
 
 app = FastAPI()
 
-@app.get("/services", response_class=JSONResponse)
+@app.get("/")
 def services():
-    # Get all platforms yt-dlp supports dynamically
     extractors = yt_dlp.extractor.gen_extractors()
-    supported_platforms = [e.IE_NAME for e in extractors]
-
+    platforms = [e.IE_NAME for e in extractors]
     return JSONResponse({
         "status": "success",
         "Credit": "@xdshivay",
-        "supported_platforms": supported_platforms
+        "supported_platforms": platforms
     })
