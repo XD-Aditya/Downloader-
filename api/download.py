@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 import yt_dlp
 import string, random
@@ -36,7 +36,7 @@ ydl_opts = {
 }
 
 @app.get("/api/download")
-def download(url: str):
+def download(url: str, request: Request):
     if not url or not is_valid_url(url):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
@@ -55,24 +55,22 @@ def download(url: str):
             "qualities": {}
         }
 
-        # Build qualities dictionary
+        # Build qualities dictionary with absolute URLs
         for f in info.get("formats", []):
-            # Only include streams with both video+audio or audio-only
+            # Only include streams with video+audio or audio-only
             if (f.get("vcodec") != "none" and f.get("acodec") != "none") or (f.get("vcodec") == "none" and f.get("acodec") != "none"):
                 height = f.get("height")
-                if height:
-                    key = f"{height}p"
-                else:
-                    key = "audio_only"
+                key = f"{height}p" if height else "audio_only"
+                abs_url = str(request.base_url) + f"d/{create_short_link(f.get('url'))}"
                 video_data["qualities"][key] = {
-                    "url": f"/d/{create_short_link(f.get('url'))}",
+                    "url": abs_url,
                     "extension": f.get("ext"),
                     "filesize": f.get("filesize")
                 }
 
         return JSONResponse({
             "status": "success",
-            "Credit":"@xdshivay",
+            "Credit": "@xdshivay",
             "videos": [video_data]
         })
 
