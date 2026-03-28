@@ -27,11 +27,11 @@ def is_valid_url(url: str):
     parsed = urlparse(url)
     return parsed.scheme in ("http", "https") and parsed.netloc
 
-# YT-DLP options
+# yt_dlp options
 ydl_opts = {
     'quiet': True,
     'skip_download': True,
-    'noplaylist': True,
+    'noplaylist': False,  # allow playlist extraction
     'format': 'bestvideo+bestaudio/best'
 }
 
@@ -44,34 +44,50 @@ def download(url: str, request: Request):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
-        # Video metadata
-        video_data = {
-            "platform": info.get("extractor_key"),
-            "title": info.get("title"),
-            "uploader": info.get("uploader"),
-            "thumbnail": info.get("thumbnail"),
-            "duration": info.get("duration"),
-            "description": info.get("description"),
-            "qualities": {}
-        }
+        videos = []
 
-        # Build qualities dictionary with absolute URLs
-        for f in info.get("formats", []):
-            # Only include streams with video+audio or audio-only
-            if (f.get("vcodec") != "none" and f.get("acodec") != "none") or (f.get("vcodec") == "none" and f.get("acodec") != "none"):
+        # Handle playlists or single videos
+        entries = info.get("entries") or [info]
+
+        for entry in entries:
+            video_obj = {}
+            audio_obj = {}
+
+            for f in entry.get("formats", []):
                 height = f.get("height")
                 key = f"{height}p" if height else "audio_only"
                 abs_url = str(request.base_url) + f"d/{create_short_link(f.get('url'))}"
-                video_data["qualities"][key] = {
-                    "url": abs_url,
-                    "extension": f.get("ext"),
-                    "filesize": f.get("filesize")
-                }
+
+                # Video + Audio
+                if f.get("vcodec") != "none" and f.get("acodec") != "none":
+                    video_obj[key] = {
+                        "url": abs_url,
+                        "extension": f.get("ext"),
+                        "filesize": f.get("filesize")
+                    }
+                # Audio only
+                elif f.get("vcodec") == "none" and f.get("acodec") != "none":
+                    audio_obj[key] = {
+                        "url": abs_url,
+                        "extension": f.get("ext"),
+                        "filesize": f.get("filesize")
+                    }
+
+            videos.append({
+                "platform": entry.get("extractor_key"),
+                "title": entry.get("title"),
+                "uploader": entry.get("uploader"),
+                "thumbnail": {"url": entry.get("thumbnail")},
+                "duration": entry.get("duration"),
+                "description": entry.get("description"),
+                "video": video_obj,
+                "audio": audio_obj
+            })
 
         return JSONResponse({
             "status": "success",
             "Credit": "@xdshivay",
-            "videos": [video_data]
+            "videos": videos
         })
 
     except Exception as e:
