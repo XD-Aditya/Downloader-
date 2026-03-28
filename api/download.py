@@ -108,7 +108,7 @@ def download(url: str, request: Request, cookies_file: str = Query(default=None,
         })
 
     except Exception as e:
-        raise HTTPException(status_code=500, status="error",credit="@xdshivay",detail="Failed to fetch the video. The content may be private, unavailable, or blocked.")
+        raise HTTPException(status_code=500,detail="Failed to fetch the video. The content may be private, unavailable, or blocked.")
 
 
 @app.get("/d/{short_id}")
