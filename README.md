@@ -50,7 +50,7 @@ GET /api/download?url=<VIDEO_URL>
 GET /api/download?url=<VIDEO_URL>
 
 **Example:**
-https://your-project.vercel.app/api/download?url=https://www.instagram.com/reel/ABC123/
+https://downloader-kappa-three.vercel.app/api/download?url=https://www.instagram.com/reel/ABC123/
 
 
 **Response:**
